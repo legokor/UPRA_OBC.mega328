@@ -16,7 +16,7 @@ void getGPSMeasurement(void)
 */
   gps_wtchdg = millis();
 //  Serial.println(gps_wtchdg);
-//  _Serial.print("GPS...");
+  _Serial.print("OBC: GPS read...");
   GPS.listen(); 
   while((gps_error !=0))// || (gps_wtchdg < 10000))
   {
@@ -26,18 +26,13 @@ void getGPSMeasurement(void)
     nowtime=millis();
     if(nowtime - gps_wtchdg >3000)
     {
-//      _Serial.println("timeout");
+      _Serial.println("timeout");
       break;
-    }/*
-    if(gps_wtchdg >9999)
-    {
-      Serial.println("timeout");
-      break;
-    }*/
+    }
 
   //  Serial.println(nowtime);
   }
-//  _Serial.println("end");
+  _Serial.println("...end");
   gps_wtchdg = 0;  
   if( GPS_Altitude > 1000)
   {
@@ -63,8 +58,7 @@ void getGPSMeasurement(void)
 
 void getMeasurements(void)
 {
-
-
+  _Serial.println(F("OBC: COLLECT SENSOR DATA"));
   //getGPSMeasurement();
   
   ext_temp = getExtTemp();

@@ -2,6 +2,7 @@ int dumpLog(void)
 {
   if(card_present)
   {  
+    _Serial.print(F("OBC: Store data..."));
     dataFile = SD.open("datalog.csv", FILE_WRITE);
   
     // if the file is available, write to it:
@@ -22,17 +23,20 @@ int dumpLog(void)
       dataFile.println(F("0123"));      
      // dataFile.println(radio_temp);      
       dataFile.close();
-
+  
+      _Serial.println(F("OK"));
       return 0;
     }
     // if the file isn't open, pop up an error:
     else 
     {
       dataFile.close();
+      _Serial.println(F("file error!"));
       return 2;
     }
   }
   dataFile.close();
+  _Serial.println(F("error!"));
   return 1;  
 }
 /*

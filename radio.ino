@@ -4,7 +4,7 @@ void serialFlush(){
   }
   for(int i=0; i<64; i++)
   {
-    bus_msg[i]=0;
+    radio_hk_data[i]=0;
   }
 } 
 
@@ -23,7 +23,7 @@ void parseRadioHK()
  
   for (i=0, j=0, k=0; (i<MSGindex) && (j<10); i++) // We start at 7 so we ignore the '$GPGGA,'
   {
-    if (bus_msg[i] == ',')
+    if (radio_hk_data[i] == ',')
     {
       j++;    // Segment index
       k=0;    // Index into target variable
@@ -33,9 +33,9 @@ void parseRadioHK()
     {
       if (j == 1)
       {
-        if ((bus_msg[i] >= '0') && (bus_msg[i] <= '9'))
+        if ((radio_hk_data[i] >= '0') && (radio_hk_data[i] <= '9'))
         {        
-          radio_temp[k] = bus_msg[i];
+          radio_temp[k] = radio_hk_data[i];
           k++;
         }
       }
@@ -61,7 +61,45 @@ int parseEOTHandshake(void)
 
 }
 
+int ProcessBUSmsg(void)
+{
+  if ((radio_hk_data[1] == 'T') && (radio_hk_data[2] == 'C') && (radio_hk_data[3] == 'H') && (radio_hk_data[4] == 'K') && (radio_hk_data[5] == 'D'))
+  {
+    parseRadioHK();
+    return 0;
+  }
+  return 1;  
+}
 
+int GetBusMSG(void)
+{
+  char inByte;
+  int error=10;
+  
+ // _Serial.listen(); 
+  while (_Serial.available() > 0)
+  {
+    inByte = _Serial.read();
+ 
+    if ((inByte =='$') || (MSGindex >= 80))
+    {
+      MSGindex = 0;
+    }
+ 
+    if (inByte != '\r')
+    {
+      radio_hk_data[MSGindex++] = inByte;
+    }
+ 
+    if (inByte == '\n')
+    {
+    //  _Serial.println("endline");
+      error=ProcessBUSmsg();
+      MSGindex = 0;
+    }
+  }
+  return error;  
+}
 
 int GetRadioHousekeeping(void)
 {
@@ -74,6 +112,8 @@ int GetRadioHousekeeping(void)
   int getmsg=10;
   
   _Serial.listen();  
+  _Serial.println(F("OBC: Get Radio Housekeeping"));  
+  delay(100);
   _Serial.println(F("$TMHKR,C,,,,*47"));
 
   timer=millis();
@@ -86,9 +126,9 @@ int GetRadioHousekeeping(void)
     getmsg=GetBusMSG();
     
     nowtime=millis();
-    if(nowtime - timer >3000)
+    if(nowtime - timer >4000)
     {
-      _Serial.println(F("timeout"));
+      _Serial.println(F("OBC: COM HK timeout"));
       break;
     }
     
@@ -111,8 +151,8 @@ void lowSpeedTelemetry(void)
 {
       unsigned long timer=0;
       unsigned int  GPS_Alt_tmp;
-
       GetRadioHousekeeping();
+      _Serial.print(F("OBC: COM temp: "));
       _Serial.println(radio_temp);
 //      Serial.begin(57600);
       _Serial.listen(); 

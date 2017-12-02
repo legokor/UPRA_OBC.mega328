@@ -49,6 +49,11 @@
 //#define SE_COM2           //COM simulation w/ handshake
 
 /*
+ * SICL Baudrate
+ */
+#define SICL_BAUD 9600
+
+/*
  * GPS module definition
  * uncomment the GPS module connected to the board
  */
@@ -101,7 +106,7 @@ volatile double int_temp =0.0;
  */
 
 byte MSGindex=0;
-char bus_msg[64];
+char radio_hk_data[64];
 //char radio_handshake[65];
 String radio_voltage ="";
 char radio_temp[5];
@@ -141,10 +146,6 @@ void timing()
 String radioString = "";
 const String callsign PROGMEM = "HAxUPRA";
 File dataFile;
-
-char str[8];
-int picnum=0;
-
 /*
  * Configuration variables
  */
@@ -190,9 +191,9 @@ void setup()
   GPS_long[10] = '\0';
   
   //UART port for COM module
-  _Serial.begin(38400);
-  _Serial.println(F("startup"));
-  _Serial.print(F("COM..."));
+  _Serial.begin(SICL_BAUD);
+  _Serial.println(F("OBC: startup"));
+  _Serial.print(F("OBC: init COM..."));
   _Serial.listen();
   
   //wait for COM startup or timeout
@@ -219,7 +220,7 @@ void setup()
   
   //UART port for GPS module
   //todo: GPS related configuration for GPS
-  _Serial.print(F("GPS..."));
+  _Serial.print(F("OBC: init GPS..."));
 #ifdef NEO6_GPS  
   GPS.begin(9600);
   int GPS_stat = SetupUBLOX();
@@ -262,7 +263,7 @@ void setup()
   delay(500);
 
   //Test Buzzer
-  _Serial.print(F("BUZZER TEST..."));
+  _Serial.print(F("OBC: BUZZER TEST..."));
   buzzerTest();
   _Serial.println(F("OK"));
   //Debug FTU
@@ -274,24 +275,28 @@ void setup()
   //SD CARD init
   if (!SD.begin(CS)) 
   {
+    _Serial.println(F("OBC: NO SD Card"));
     card_present=0;
   }
   else
   {
+    _Serial.print(F("OBC: create log file..."));
     card_present=1;
     dataFile = SD.open("datalog.csv", FILE_WRITE);
-  
+
     // if the file is available, write to it:
     if (dataFile) 
     {
       dataFile.println(F("time,latitude,longitude,altitude,ext_temp,OBC_temp,COM_temp"));
       dataFile.close();
+      _Serial.println(F("OK"));
       // print to the serial port too:
     }
     // if the file isn't open, pop up an error:
     else 
     {
       card_present=2;
+      _Serial.println(F("File error!"));
     }    
   }
 /*
@@ -323,12 +328,12 @@ void setup()
   
   //send startup msg
 #ifdef SW_COM1
-  _Serial.println(F("strt"));
-  _Serial.print(F("CRD: "));
+  _Serial.println(F("OBC: Init done"));
+  _Serial.print(F("OBC: CRD: "));
   _Serial.println(card_present);
-  _Serial.print(F("SGN: "));
+  _Serial.print(F("OBC: SGN: "));
   _Serial.println(callsign);
-  _Serial.print(F("FTU: "));
+  _Serial.print(F("OBC: FTU: "));
   _Serial.println(TERMINATION);
 #endif  
   
@@ -336,10 +341,7 @@ void setup()
   now = millis();  
 
   //Startup measurement and radio
-/*  lowSpeedStartup();
-  getMeasurements();
-  getGPSMeasurement();
-  delay(1000);*/
+
   getGPSMeasurement();
   delay(50);
   lowSpeedTelemetry();
@@ -369,8 +371,37 @@ void loop()
         _Serial.println("FAILED");
       }*/
       dumpLog();
-      getPICuart();
 
+//---------------datalog---------------
+
+      
+ 
+ /*   dataFile = SD.open("datalog.csv", FILE_WRITE);
+    if (dataFile) 
+    {
+      dataFile.print(GPS_time);
+      dataFile.print(",");
+      dataFile.print(GPS_lati);
+      dataFile.print(",");
+      dataFile.print(GPS_long);
+      dataFile.print(",");
+      dataFile.print(GPS_Altitude);
+      dataFile.print(",");
+      dataFile.print((int)(ext_temp*10.0));
+      dataFile.print(",");
+      dataFile.print((int)(int_temp*10.0));
+      dataFile.print(",");
+      dataFile.println(radio_temp);      
+      dataFile.close();
+    }
+    // if the file isn't open, pop up an error:
+    else 
+    {
+    }
+    */
+
+
+//---------------datalogend------------
       
       is_measure=0;
     }
@@ -393,6 +424,7 @@ void loop()
   
   if(is_landing)
   {
+    _Serial.println(F("OBC: BEACON MODE"));
     buzzer();
     getGPSMeasurement();
     lowSpeedTelemetry();

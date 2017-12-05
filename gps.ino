@@ -227,7 +227,7 @@ int setGPS_DynamicModel6()
    //delay(100);
    gps_set_sucess=getUBX_ACK(setdm6);
    wtchdg++;
-   if( wtchdg > 10) //32700 
+   if( wtchdg > 3) //32700 
    {
 //      _Serial.print("d_error...");
       return 1;
@@ -254,7 +254,7 @@ int setGPS_PORT()
    //delay(100);
    gps_set_sucess=getUBX_ACK(setport);
    wtchdg++;
-   if( wtchdg > 10) //32700 
+   if( wtchdg > 3) //32700 
    {
 //      _Serial.print("p_error...");
       return 1;

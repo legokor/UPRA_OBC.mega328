@@ -26,7 +26,7 @@ void getGPSMeasurement(void)
     nowtime=millis();
     if(nowtime - gps_wtchdg >3000)
     {
-      _Serial.println("timeout");
+      _Serial.print("timeout");
       break;
     }
 

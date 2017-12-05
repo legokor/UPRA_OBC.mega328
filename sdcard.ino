@@ -36,7 +36,7 @@ int dumpLog(void)
     }
   }
   dataFile.close();
-  _Serial.println(F("error!"));
+  _Serial.println(F("OBC: No SD CARD!"));
   return 1;  
 }
 /*

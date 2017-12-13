@@ -1,6 +1,6 @@
-int SetupUBLOX(void)
+uint8_t SetupUBLOX(void)
 {
-  int GPS_ERROR=0;
+  uint8_t GPS_ERROR=0;
   GPS.listen();
    _delay_ms(1000);
   if( setGPS_DynamicModel6() != 0)
@@ -8,20 +8,14 @@ int SetupUBLOX(void)
     GPS_ERROR += 1;
   }
   //else GPS_ERROR = 0;
-  _delay_ms(1000);
-  if( setGPS_PORT() != 0)
-  {
-    GPS_ERROR += 2;
-  }
-  //else GPS_ERROR = 0;
 
   return GPS_ERROR;  
 }
 
-int CheckGPS()
+uint8_t CheckGPS()
 {
-  int inByte;
-  int error=10;
+  uint8_t inByte;
+  uint8_t error=10;
   while (GPS.available() > 0)
   {
     inByte = GPS.read();
@@ -44,7 +38,7 @@ int CheckGPS()
   }
   return error;
 }
-int ProcessGPSLine()
+uint8_t ProcessGPSLine()
 {
   if ((GPSBuffer[1] == 'G') && (GPSBuffer[2] == 'P') && (GPSBuffer[3] == 'G') && (GPSBuffer[4] == 'G') && (GPSBuffer[5] == 'A'))
   {
@@ -210,7 +204,7 @@ char CheckNSEW(char nsew)
 }
 
 
-int setGPS_DynamicModel6()
+uint8_t setGPS_DynamicModel6()
 {
  int gps_set_sucess=0;
  int wtchdg=0;
@@ -236,33 +230,6 @@ int setGPS_DynamicModel6()
  }
 // _Serial.print("d_ok...");
   return 0;
-}
-
-int setGPS_PORT()
-{
- int gps_set_sucess=0;
- int wtchdg=0;
- uint8_t setport[] = {
- 0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 
- 0x00, 0xD0, 0x08, 0x00, 0x00, 0x80, 0x25, 0x00, 0x00, 
- 0x07, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA1, 
- 0xAF };
- 
- while(!gps_set_sucess)
- {
-   sendUBX(setport, sizeof(setport)/sizeof(uint8_t));
-   //delay(100);
-   gps_set_sucess=getUBX_ACK(setport);
-   wtchdg++;
-   if( wtchdg > 3) //32700 
-   {
-//      _Serial.print("p_error...");
-      return 1;
-   }  
-   //delay(100);
- }
-// _Serial.print("p_ok...");
- return 0;
 }
 
 

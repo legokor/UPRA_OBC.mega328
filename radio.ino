@@ -2,9 +2,9 @@ void serialFlush(){
   while(_Serial.available() > 0) {
     char t = _Serial.read();
   }
-  for(int i=0; i<64; i++)
+  for(int i=0; i<30; i++)
   {
-    radio_hk_data[i]=0;
+    bus_msg[i]=0;
   }
 } 
 
@@ -23,7 +23,7 @@ void parseRadioHK()
  
   for (i=0, j=0, k=0; (i<MSGindex) && (j<10); i++) // We start at 7 so we ignore the '$GPGGA,'
   {
-    if (radio_hk_data[i] == ',')
+    if (bus_msg[i] == ',')
     {
       j++;    // Segment index
       k=0;    // Index into target variable
@@ -33,9 +33,9 @@ void parseRadioHK()
     {
       if (j == 1)
       {
-        if ((radio_hk_data[i] >= '0') && (radio_hk_data[i] <= '9'))
+        if ((bus_msg[i] >= '0') && (bus_msg[i] <= '9'))
         {        
-          radio_temp[k] = radio_hk_data[i];
+          radio_temp[k] = bus_msg[i];
           k++;
         }
       }
@@ -61,7 +61,7 @@ int parseEOTHandshake(void)
 
 }
 
-int ProcessBUSmsg(void)
+/*int ProcessBUSmsg(void)
 {
   if ((radio_hk_data[1] == 'T') && (radio_hk_data[2] == 'C') && (radio_hk_data[3] == 'H') && (radio_hk_data[4] == 'K') && (radio_hk_data[5] == 'D'))
   {
@@ -100,6 +100,7 @@ int GetBusMSG(void)
   }
   return error;  
 }
+*/
 
 int GetRadioHousekeeping(void)
 {

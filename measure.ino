@@ -1,6 +1,6 @@
 void getGPSMeasurement(void)
 {
-  int gps_error=10;
+  uint8_t gps_error=10;
   volatile int gps_wtchdg=0;
   int nowtime=0;
 

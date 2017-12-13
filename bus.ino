@@ -30,7 +30,7 @@ int GetBusMSG(void)
   {
     inByte = _Serial.read();
  
-    if ((inByte =='$') || (MSGindex >= 80))
+    if ((inByte =='$') || (MSGindex >= 30))
     {
       MSGindex = 0;
     }

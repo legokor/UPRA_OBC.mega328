@@ -1,12 +1,11 @@
 int dumpLog(void)
 {
+ // File dataFile;
   if(card_present)
   {  
     _Serial.print(F("OBC: Store data..."));
-    dataFile = SD.open("datalog.csv", FILE_WRITE);
-  
     // if the file is available, write to it:
-    if (dataFile) 
+    if (dataFile.open("data.csv", O_RDWR | O_CREAT | O_AT_END)) 
     {
       dataFile.print(GPS_time);
       dataFile.print(F(","));
@@ -20,8 +19,8 @@ int dumpLog(void)
       dataFile.print(F(","));
       dataFile.print((int)(int_temp*10.0));
       dataFile.print(F(","));
-      dataFile.println(F("0123"));      
-     // dataFile.println(radio_temp);      
+     // dataFile.println(F("0123"));      
+      dataFile.println(radio_temp);      
       dataFile.close();
   
       _Serial.println(F("OK"));

@@ -77,13 +77,14 @@ int savePICsd(void)
   strcat(str, ".jpg");
 
   //Open the new dataFile
-  dataFile = SD.open(str, O_WRITE | O_CREAT | O_TRUNC);
-  if(! dataFile)
+  //dataFile = SD.open(str, O_WRITE | O_CREAT | O_TRUNC);
+  if(!dataFile.open(str, O_RDWR | O_CREAT ))
   {
     _Serial.println(F("open dataFile faild"));
+    dataFile.close();
     return 2;
   }
-  picnum++;
+  //picnum++;
 
   
  i = 0;

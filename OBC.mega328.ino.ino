@@ -1,5 +1,5 @@
 #include <SPI.h>
-#include <SD.h>
+#include <SdFat.h>
 
 #include <SoftwareSerial.h>
 //#include <AltSoftSerial.h>
@@ -12,7 +12,7 @@
  */
  #define MEASURE      1   // activater measurement every MEASURE)*5s  (0-> never, 1-> every 5second)
  #define RADIO        3   // activater telemetry downlink every RADIO*5s  (0-> never, 1-> every 5second)
- #define TERMINATION  cut_down_alt
+ //#define TERMINATION  cut_down_alt
 
 /*
  * Temperature macros
@@ -80,10 +80,10 @@ SoftwareSerial _Serial(0,1);
 
 byte              GPSBuffer[82];
 byte              GPSIndex=0;
-unsigned int      GPS_Satellites=0;
+uint8_t           GPS_Satellites=0;
 unsigned int      GPS_Altitude=110;
 
-unsigned int      GPS_Fix=0;
+uint8_t           GPS_Fix=0;
 char              GPS_time[10];
 char              GPS_lati[12];
 char              GPS_long[13];
@@ -92,7 +92,10 @@ char              GPS_long[13];
  * SD Card variables
  */
 
-byte card_present=0;
+bool card_present=false;
+
+SdFat sd;
+SdFile dataFile;
 
 /*
  * Temperature variables
@@ -106,9 +109,9 @@ volatile double int_temp =0.0;
  */
 
 byte MSGindex=0;
-char radio_hk_data[64];
+char bus_msg[30];
 //char radio_handshake[65];
-String radio_voltage ="";
+
 char radio_temp[5];
 
 
@@ -117,16 +120,14 @@ char radio_temp[5];
  */
 
 unsigned long now;
-int is_measure=0;
-int is_radio=0;
+uint8_t is_measure=0;
+uint8_t is_radio=0;
 
 bool is_climb=false;
 bool is_landing=false;
-bool is_FTU_on=false;
+//bool is_FTU_on=false;
 
 bool is_com_present=true;
-
-int cut_down_alt = 17800;
 
 void timing()
 {
@@ -143,9 +144,9 @@ void timing()
  */
 
 //String dataString = "";
-String radioString = "";
-const String callsign PROGMEM = "HAxUPRA";
-File dataFile;
+//String radioString = "";
+//const String callsign PROGMEM = "HAxUPRA";
+//File dataFile;
 /*
  * Configuration variables
  */
@@ -189,6 +190,11 @@ void setup()
   GPS_long[8] = '0';
   GPS_long[9] = '0';
   GPS_long[10] = '\0';
+
+  radio_temp[0] = 'N';
+  radio_temp[1] = '/';
+  radio_temp[2] = 'A';
+  radio_temp[3] = '\0';
   
   //UART port for COM module
   _Serial.begin(SICL_BAUD);
@@ -229,16 +235,6 @@ void setup()
     _Serial.listen();
     _Serial.println(F("ERROR!: Airborne mode"));
   }
-  else if(GPS_stat == 2)
-  {
-    _Serial.listen();
-    _Serial.println(F("ERROR!: Port config"));
-  }
-  else if(GPS_stat == 3)
-  {
-    _Serial.listen();
-    _Serial.println(F("ERROR!: Airborne + Port"));
-  }
   else
   {
     _Serial.listen();
@@ -273,70 +269,34 @@ void setup()
   while(1);
   */
   //SD CARD init
-  if (!SD.begin(CS)) 
+  if (!sd.begin(CS, SPI_HALF_SPEED)) 
   {
     _Serial.println(F("OBC: NO SD Card"));
-    card_present=0;
+    card_present=false;
   }
   else
   {
     _Serial.print(F("OBC: create log file..."));
-    card_present=1;
-    dataFile = SD.open("datalog.csv", FILE_WRITE);
-
-    // if the file is available, write to it:
-    if (dataFile) 
+    card_present=true;
+    if (dataFile.open("data.csv", O_RDWR | O_CREAT | O_AT_END))
     {
       dataFile.println(F("time,latitude,longitude,altitude,ext_temp,OBC_temp,COM_temp"));
       dataFile.close();
-      _Serial.println(F("OK"));
-      // print to the serial port too:
-    }
-    // if the file isn't open, pop up an error:
+      _Serial.println(F("OK"));      
+    }   
     else 
     {
-      card_present=2;
+      card_present=false;
+      dataFile.close();
       _Serial.println(F("File error!"));
     }    
   }
-/*
-  //flush config data
-  for(int i=0; i<100; i++)
-  {
-    config_data[i] = 0;
-  }
+  dataFile.close();
 
-  //set config from SD Card
-  _Serial.print("READ CONFIG...");
-  if(read_config()!=0)
-  {
-    is_config_read = false;
-     _Serial.println("FAILED");
-     callsign="HAxUPRA";
-  }
-  else
-  {
-    is_config_read = true;
-     _Serial.println("OK");
-  }
-
-  if( is_config_read )
-  {
-    parseConfig();
-  }
-*/
   
   //send startup msg
-#ifdef SW_COM1
   _Serial.println(F("OBC: Init done"));
-  _Serial.print(F("OBC: CRD: "));
-  _Serial.println(card_present);
-  _Serial.print(F("OBC: SGN: "));
-  _Serial.println(callsign);
-  _Serial.print(F("OBC: FTU: "));
-  _Serial.println(TERMINATION);
-#endif  
-  
+   
   //set startup time
   now = millis();  
 
@@ -353,54 +313,18 @@ void loop()
   if( ((millis() - now) > 5000) && (!is_landing))
   {
     timing();
-    //_Serial.println(is_measure);
-    //_Serial.println(MEASURE);
     if(is_measure == MEASURE)
     {
       getMeasurements();
  
       getGPSMeasurement();
       delay(50);
-/*      _Serial.print("DATA LOG...");
-      if( dumpLog() == 0)
-      {
-        _Serial.println("OK"); 
-      }
-      else
-      {
-        _Serial.println("FAILED");
-      }*/
-      dumpLog();
+      
 
 //---------------datalog---------------
 
-      
- 
- /*   dataFile = SD.open("datalog.csv", FILE_WRITE);
-    if (dataFile) 
-    {
-      dataFile.print(GPS_time);
-      dataFile.print(",");
-      dataFile.print(GPS_lati);
-      dataFile.print(",");
-      dataFile.print(GPS_long);
-      dataFile.print(",");
-      dataFile.print(GPS_Altitude);
-      dataFile.print(",");
-      dataFile.print((int)(ext_temp*10.0));
-      dataFile.print(",");
-      dataFile.print((int)(int_temp*10.0));
-      dataFile.print(",");
-      dataFile.println(radio_temp);      
-      dataFile.close();
-    }
-    // if the file isn't open, pop up an error:
-    else 
-    {
-    }
-    */
-
-
+      dumpLog();
+          
 //---------------datalogend------------
       
       is_measure=0;
@@ -410,13 +334,13 @@ void loop()
       lowSpeedTelemetry();
       is_radio=0;
     }
-    if(( GPS_Altitude > TERMINATION) && (!is_FTU_on))
+/*    if(( GPS_Altitude > TERMINATION) && (!is_FTU_on))
     {
         digitalWrite(FTU, HIGH);
         delay(1000);
         digitalWrite(FTU, LOW);
         is_FTU_on = true;
-    }
+    }*/
    // timing();
   }
 

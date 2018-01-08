@@ -81,7 +81,7 @@ SoftwareSerial _Serial(0,1);
 byte              GPSBuffer[82];
 byte              GPSIndex=0;
 uint8_t           GPS_Satellites=0;
-unsigned int      GPS_Altitude=110;
+uint32_t          GPS_Altitude=110;
 
 uint8_t           GPS_Fix=0;
 char              GPS_time[10];

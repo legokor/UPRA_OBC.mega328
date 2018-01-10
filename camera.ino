@@ -29,7 +29,7 @@ int processCMDTAmsg(void)
 
     }
     
-   // GPS_Altitude = Altitude;
+   
   }
 
   if( tmp[0] == 'S')

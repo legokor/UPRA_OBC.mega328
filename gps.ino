@@ -59,7 +59,7 @@ uint8_t ProcessGPSLine()
 void ProcessGPGGACommand()
 {
   int i, j, k, IntegerPart;
-  unsigned int Altitude;
+  long Altitude;
   int time_msec = 0;
 
   char _GPS_time[10] = {'1', '2', '3', '4', '5', '6', '\0'};

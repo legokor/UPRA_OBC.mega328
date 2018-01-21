@@ -112,7 +112,7 @@ byte MSGindex=0;
 char bus_msg[30];
 //char radio_handshake[65];
 
-char radio_temp[5];
+char radio_temp[4];
 
 
 /*
@@ -166,25 +166,23 @@ void setup()
   GPS_time[5] = '7';
   GPS_time[6] = '\0';
 
-  //GPS_lati[12] = {'+', '4', '8', '0', '7', '.', '0', '3', '8', '\0'};
   GPS_lati[0] = '+';
-  GPS_lati[1] = '4';
-  GPS_lati[2] = '8';
+  GPS_lati[1] = '9';
+  GPS_lati[2] = '5';
   GPS_lati[3] = '0';
-  GPS_lati[4] = '7';
+  GPS_lati[4] = '0';
   GPS_lati[5] = '.';
   GPS_lati[6] = '0';
-  GPS_lati[7] = '3';
-  GPS_lati[8] = '8';
+  GPS_lati[7] = '0';
+  GPS_lati[8] = '0';
   GPS_lati[9] = '\0';
 
-  //GPS_long[13] = {'+', '0', '1', '1', '3', '1', '.', '0', '0', '0', '\0'};
   GPS_long[0] = '+';
-  GPS_long[1] = '0';
-  GPS_long[2] = '1';
-  GPS_long[3] = '1';
-  GPS_long[4] = '3';
-  GPS_long[5] = '1';
+  GPS_long[1] = '1';
+  GPS_long[2] = '8';
+  GPS_long[3] = '8';
+  GPS_long[4] = '8';
+  GPS_long[5] = '8';
   GPS_long[6] = '.';
   GPS_long[7] = '0';
   GPS_long[8] = '0';

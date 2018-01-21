@@ -33,7 +33,7 @@ void parseRadioHK()
     {
       if (j == 1)
       {
-        if ((bus_msg[i] >= '0') && (bus_msg[i] <= '9'))
+        if (((bus_msg[i] >= '0') && (bus_msg[i] <= '9')) ||(bus_msg[i] == '-') )
         {        
           radio_temp[k] = bus_msg[i];
           k++;
@@ -47,7 +47,7 @@ void parseRadioHK()
     
    // GPS_Altitude = Altitude;
   }
-  radio_temp[5] ='\0';  
+  radio_temp[3] ='\0';  
 
 }
 
@@ -61,46 +61,6 @@ int parseEOTHandshake(void)
 
 }
 
-/*int ProcessBUSmsg(void)
-{
-  if ((radio_hk_data[1] == 'T') && (radio_hk_data[2] == 'C') && (radio_hk_data[3] == 'H') && (radio_hk_data[4] == 'K') && (radio_hk_data[5] == 'D'))
-  {
-    parseRadioHK();
-    return 0;
-  }
-  return 1;  
-}
-
-int GetBusMSG(void)
-{
-  char inByte;
-  int error=10;
-  
- // _Serial.listen(); 
-  while (_Serial.available() > 0)
-  {
-    inByte = _Serial.read();
- 
-    if ((inByte =='$') || (MSGindex >= 80))
-    {
-      MSGindex = 0;
-    }
- 
-    if (inByte != '\r')
-    {
-      radio_hk_data[MSGindex++] = inByte;
-    }
- 
-    if (inByte == '\n')
-    {
-    //  _Serial.println("endline");
-      error=ProcessBUSmsg();
-      MSGindex = 0;
-    }
-  }
-  return error;  
-}
-*/
 
 int GetRadioHousekeeping(void)
 {

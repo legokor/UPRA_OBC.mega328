@@ -2,12 +2,6 @@ int ProcessBUSmsg(void)
 {
   if ((bus_msg[1] == 'T') && (bus_msg[2] == 'C') && (bus_msg[3] == 'H') && (bus_msg[4] == 'K') && (bus_msg[5] == 'D'))
   {
-/*    Serial.println("gga detect");
-    for(int v=0;v<82;v++)
-    {
-      Serial.print(char(GPSBuffer[v]));
-    }
-    Serial.println("");*/
     parseRadioHK();
 //    CheckGPSFix();
     return 0;
@@ -16,7 +10,6 @@ int ProcessBUSmsg(void)
   {
     return processCMDTAmsg();
   }
-//  Serial.println("no gga");
   return 1;  
 }
 

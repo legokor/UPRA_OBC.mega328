@@ -34,6 +34,10 @@
 #define SDA     18        //I2C SDA        
 #define SCL     19        //I2C SCL
 
+//EXTERNAL CAMERA
+#define MENU    18
+#define SHTR    19
+
 //SD CARD - SPI
 #define MOSI    11        //MOSI
 #define MISO    12        //MISO
@@ -81,7 +85,7 @@ SoftwareSerial _Serial(0,1);
 byte              GPSBuffer[82];
 byte              GPSIndex=0;
 uint8_t           GPS_Satellites=0;
-long              GPS_Altitude=41110;
+long              GPS_Altitude=0;
 
 uint8_t           GPS_Fix=0;
 char              GPS_time[10];
@@ -122,6 +126,9 @@ char radio_temp[4];
 unsigned long now;
 uint8_t is_measure=0;
 uint8_t is_radio=0;
+
+uint8_t ecam_timer=0;
+bool is_ecam_on=false;
 
 bool is_climb=false;
 bool is_landing=false;
@@ -197,6 +204,10 @@ void setup()
   //UART port for COM module
   _Serial.begin(SICL_BAUD);
   _Serial.println(F("OBC: startup"));
+
+  ecam_init();
+  ecam_ON();
+  
   _Serial.print(F("OBC: init COM..."));
   _Serial.listen();
   
@@ -253,7 +264,7 @@ void setup()
   pinMode(CS, OUTPUT);
   digitalWrite(CS, HIGH);
   digitalWrite(FTU, LOW);
-  
+
   delay(500);
 
   //Test Buzzer
@@ -294,6 +305,12 @@ void setup()
   
   //send startup msg
   _Serial.println(F("OBC: Init done"));
+
+  //start external camera video
+  _Serial.println(F("OBC: ECAM START"));
+  ecam_PictureMode();
+  ecam_pressSHTR(500);
+
    
   //set startup time
   now = millis();  
@@ -310,6 +327,7 @@ void loop()
   // put your main code here, to run repeatedly:
   if( ((millis() - now) > 5000) && (!is_landing))
   {
+    ecam_timer=0;
     timing();
     if(is_measure == MEASURE)
     {
@@ -317,13 +335,14 @@ void loop()
  
       getGPSMeasurement();
       delay(50);
-      
 
 //---------------datalog---------------
 
       dumpLog();
           
 //---------------datalogend------------
+
+      ecam_pressSHTR(500);
       
       is_measure=0;
     }
@@ -349,7 +368,18 @@ void loop()
     _Serial.println(F("OBC: BEACON MODE"));
     buzzer();
     getGPSMeasurement();
+    dumpLog();
     lowSpeedTelemetry();
+    if( ((millis() - now) > 5000) && (is_ecam_on))
+    {
+      timing();
+      ecam_pressSHTR(500);
+      ecam_timer++;
+    }
+    if( (ecam_timer > 120 ) && (is_ecam_on)) //120 for 10mins
+    {
+      ecam_OFF();
+    }
    // delay(1000);
   }
 

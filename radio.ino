@@ -112,6 +112,7 @@ void lowSpeedTelemetry(void)
 {
       unsigned long timer=0;
       long  GPS_Alt_tmp;
+      char buffer[10];
       GetRadioHousekeeping();
       _Serial.print(F("OBC: COM temp: "));
       _Serial.println(radio_temp);
@@ -134,11 +135,14 @@ void lowSpeedTelemetry(void)
         _Serial.print(GPS_long);
         _Serial.print(F(","));
         //_Serial.print(GPS_Alt_ch);
-        _Serial.printf("%05ld",GPS_Alt_tmp);
+        sprintf(buffer, "%05ld",GPS_Alt_tmp);
+        _Serial.print(buffer);
         _Serial.print(F(","));
-        _Serial.printf("%04d",(int)(ext_temp*10.0));
+        sprintf(buffer, "%04d",(int)(ext_temp*10.0));
+        _Serial.print(buffer);
         _Serial.print(F(","));
-        _Serial.printf("%04d",(int)(int_temp*10.0));
+        sprintf(buffer, "%04d",(int)(int_temp*10.0));
+        _Serial.print(buffer);
         _Serial.println(F("*47"));    
         
 }

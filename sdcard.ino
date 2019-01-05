@@ -17,7 +17,7 @@ int dumpLog(void)
       dataFile.print(F(","));
       dataFile.print((int)(ext_temp*10.0));
       dataFile.print(F(","));
-      dataFile.print((int)(int_temp*10.0));
+      dataFile.print((int32_t)(int_temp*10.0));
       dataFile.print(F(","));
      // dataFile.println(F("0123"));      
       dataFile.println(radio_temp);      

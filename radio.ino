@@ -141,7 +141,7 @@ void lowSpeedTelemetry(void)
         sprintf(buffer, "%04d",(int)(ext_temp*10.0));
         _Serial.print(buffer);
         _Serial.print(F(","));
-        sprintf(buffer, "%04d",(int)(int_temp*10.0));
+        sprintf(buffer, "%04d",(int32_t)(int_temp*10.0));
         _Serial.print(buffer);
         _Serial.println(F("*47"));    
         

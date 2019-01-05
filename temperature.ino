@@ -33,14 +33,17 @@ double getIntTemp(void)
 {
   double temp     = 0.0;
   double temp_avg = 0.0;
+  double int_temp_tmp = 0.0;
   
   for (int i=0; i<AVRG; i++)
   {
-    delay(100);
-    temp_avg += IntTemp();
+    delay(10);
+    int_temp_tmp = IntTemp();
+    int_temp_tmp = (int_temp_tmp + CALIBRATION_OFFSET) * CALIBRATION_GAIN;
+    temp_avg += int_temp_tmp; 
   }
+  
   temp = temp_avg/((double)AVRG);
-  temp += INTERNALOFFSET;  
   return temp;  
 }
 

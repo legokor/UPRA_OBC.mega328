@@ -21,9 +21,11 @@
  */
 
 #define AVRG 10
-#define INTERNALOFFSET 0
-#define INTERNALCALIB 102.71
-#define INTERNALGAIN 2.69
+
+#define INTERNALCALIB         ((double)(90.0 ))
+#define INTERNALGAIN          ((double)(1.51))
+#define CALIBRATION_OFFSET    ((double)(-23.33))
+#define CALIBRATION_GAIN      ((double)(1.35))
 
 /*
  * PIN macros

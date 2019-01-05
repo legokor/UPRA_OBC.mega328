@@ -1,3 +1,24 @@
+bool busBusy_interrupt(void)
+{
+  if (digitalRead(BUSBUSY) != 1)
+  {
+    return true;
+  }
+  return false;
+}
+
+void setBusBusy(void)
+{
+  pinMode(BUSBUSY, OUTPUT);
+  digitalWrite(BUSBUSY, LOW);
+}
+
+void clrBusBusy(void)
+{
+  digitalWrite(BUSBUSY, HIGH);
+  pinMode(BUSBUSY, INPUT);
+}
+
 int ProcessBUSmsg(void)
 {
   if ((bus_msg[1] == 'T') && (bus_msg[2] == 'C') && (bus_msg[3] == 'H') && (bus_msg[4] == 'K') && (bus_msg[5] == 'D'))

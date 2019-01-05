@@ -10,8 +10,10 @@
 /*
  * Timing macros
  */
- #define MEASURE      1   // activater measurement every MEASURE)*5s  (0-> never, 1-> every 5second)
- #define RADIO        3   // activater telemetry downlink every RADIO*5s  (0-> never, 1-> every 5second)
+ #define GETGPS       1   // activate GPS read every GETGPS)*5s                   (0-> never, 1-> every 5second)
+ #define GETTEMP      15  // activate Temperature measurement every GETTEMP)*5s   (0-> never, 1-> every 5second)
+ #define GETICS       2  // activate ICS capture every GETICS)*5s                (0-> never, 1-> every 5second)
+ #define RADIO        3   // activate telemetry downlink every RADIO*5s           (0-> never, 1-> every 5second)
  //#define TERMINATION  cut_down_alt
 
 /*
@@ -44,42 +46,19 @@
 #define CLK     13        //CLK        
 #define CS      10        //CHIP SELECT
 
-/*
- * COM module macros
- * uncomment the COM module in use
- */
-//#define HW_COM            //COM hardware connected
-#define SW_COM1           //COM simulation w/o handshake
-//#define SE_COM2           //COM simulation w/ handshake
-
-/*
- * SICL Baudrate
- */
+//UPRA BUS
 #define SICL_BAUD 9600
+#define SICLRX    0
+#define SICLTX    1
+#define BUSBUSY   A0
 
-/*
- * GPS module definition
- * uncomment the GPS module connected to the board
- */
-
-#define NEO6_GPS        //UBLOX NEO 6M
-//#define NVS8C_GPS       //NVS-8C
-//#define L86_GPS         //QUECTEL L86
-//#define TYCO            //Tyco A10xx seires
-//#define Soft_GPS        //SERIAL SIMULATOR
-
-/*
- * Radio macros
- */
-
-//#define CALLSIGN 
 
 /*
  * GPS variables
  */
 
 SoftwareSerial GPS(GPS_RX, GPS_TX); // RX, TX
-SoftwareSerial _Serial(0,1);
+SoftwareSerial _Serial(SICLRX,SICLTX);
 //AltSoftSerial GPS;
 
 byte              GPSBuffer[82];
@@ -124,8 +103,10 @@ char radio_temp[4];
  */
 
 unsigned long now;
-uint8_t is_measure=0;
+uint8_t is_gps=0;
+uint8_t is_temp=0;
 uint8_t is_radio=0;
+uint8_t is_ics=0;
 
 uint8_t ecam_timer=0;
 bool is_ecam_on=false;
@@ -141,8 +122,10 @@ void timing()
   now = millis();
   if( !is_landing )
   {
-    is_measure++;
+    is_gps++;
+    is_temp++;
     is_radio++;
+    is_ics++;
   }
 }
 
@@ -233,10 +216,8 @@ void setup()
   }
 
   
-  //UART port for GPS module
-  //todo: GPS related configuration for GPS
   _Serial.print(F("OBC: init GPS..."));
-#ifdef NEO6_GPS  
+
   GPS.begin(9600);
   int GPS_stat = SetupUBLOX();
   if(GPS_stat == 1)
@@ -249,16 +230,11 @@ void setup()
     _Serial.listen();
     _Serial.println(F("OK"));
   }
-#elif defined(TYCO)
-  GPS.begin(4800);
-#elif defined(Soft_GPS)
-  GPS.begin(9600);
-
-#endif
   
   delay(500);
   _Serial.listen();
   //Pin configurations
+  pinMode(BUSBUSY, INPUT);
   pinMode(BUZZ, OUTPUT);
   pinMode(FTU, OUTPUT);
   pinMode(CS, OUTPUT);
@@ -316,7 +292,7 @@ void setup()
   now = millis();  
 
   //Startup measurement and radio
-
+  getTemperatures();
   getGPSMeasurement();
   delay(50);
   lowSpeedTelemetry();
@@ -325,13 +301,26 @@ void setup()
 void loop() 
 {
   // put your main code here, to run repeatedly:
+  if(busBusy_interrupt())
+  {
+    _Serial.println(F("OBC: BUS INTERRUPT"));
+    //send ACK message
+    //get BUS message
+  }
+  
   if( ((millis() - now) > 5000) && (!is_landing))
   {
     ecam_timer=0;
     timing();
-    if(is_measure == MEASURE)
+    if(is_temp == GETTEMP)
     {
-      getMeasurements();
+      getTemperatures();
+      is_temp = 0;
+    }
+
+    if(is_gps == GETGPS)
+    {
+      //getTemperatures();
  
       getGPSMeasurement();
       delay(50);
@@ -344,13 +333,20 @@ void loop()
 
       ecam_pressSHTR(500);
       
-      is_measure=0;
+      is_gps=0;
     }
     if(is_radio == RADIO)
     {
       lowSpeedTelemetry();
       is_radio=0;
     }
+
+    if(is_ics == GETICS)
+    {
+      getPICuart();
+      is_ics = 0;
+    }
+    
 /*    if(( GPS_Altitude > TERMINATION) && (!is_FTU_on))
     {
         digitalWrite(FTU, HIGH);
@@ -360,8 +356,6 @@ void loop()
     }*/
    // timing();
   }
-
-// Delay-es megoldás
   
   if(is_landing)
   {

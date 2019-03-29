@@ -13,7 +13,8 @@
  #define MEASURE      1   // activater measurement every MEASURE)*5s  (0-> never, 1-> every 5second)
  #define RADIO        3   // activater telemetry downlink every RADIO*5s  (0-> never, 1-> every 5second)
  //#define TERMINATION  cut_down_alt
-
+ #define GETICS       3  // activate ICS capture every GETICS)*5s                (0-> never, 1-> every 5second) 
+ 
 /*
  * Temperature macros
  */
@@ -94,6 +95,8 @@ char              GPS_time[10];
 char              GPS_lati[12];
 char              GPS_long[13];
 
+bool              GPS_first_fix;
+
 /*
  * SD Card variables
  */
@@ -128,15 +131,15 @@ char radio_temp[4];
 unsigned long now;
 uint8_t is_measure=0;
 uint8_t is_radio=0;
-
-uint8_t ecam_timer=0;
-bool is_ecam_on=false;
+uint8_t is_ics=0;
 
 bool is_climb=false;
 bool is_landing=false;
 //bool is_FTU_on=false;
 
 bool is_com_present=true;
+
+uint8_t init_error;
 
 void timing()
 {
@@ -145,6 +148,7 @@ void timing()
   {
     is_measure++;
     is_radio++;
+    is_ics++;
   }
 }
 
@@ -198,6 +202,8 @@ void setup()
   GPS_long[9] = '0';
   GPS_long[10] = '\0';
 
+  GPS_first_fix = false;
+  
   radio_temp[0] = 'N';
   radio_temp[1] = '/';
   radio_temp[2] = 'A';
@@ -207,34 +213,8 @@ void setup()
   _Serial.begin(SICL_BAUD);
   _Serial.println(F("OBC: startup"));
 
-  ecam_init();
-  ecam_ON();
-  
-  _Serial.print(F("OBC: init COM..."));
-  _Serial.listen();
-  
-  //wait for COM startup or timeout
-  now = millis();
-  while(!_Serial.available())
-  {
-    if((millis() - now) > 10000)
-    {
-      is_com_present=false;
-      break;
-    }
-  }
-  now=0;
-  if(is_com_present)
-  {
-    delay(1000);
-    _Serial.println(F("OK"));
-  }
-  else
-  {
-    _Serial.println(F("COM TIMEOUT"));
-  }
-
-  
+  init_error = 5;
+   
   //UART port for GPS module
   //todo: GPS related configuration for GPS
   _Serial.print(F("OBC: init GPS..."));
@@ -245,11 +225,13 @@ void setup()
   {
     _Serial.listen();
     _Serial.println(F("ERROR!: Airborne mode"));
+    init_error = 3;
   }
   else
   {
     _Serial.listen();
     _Serial.println(F("OK"));
+    init_error = 5;
   }
 #elif defined(TYCO)
   GPS.begin(4800);
@@ -266,13 +248,9 @@ void setup()
   pinMode(CS, OUTPUT);
   digitalWrite(CS, HIGH);
   digitalWrite(FTU, LOW);
-
+  digitalWrite(BUZZ, HIGH);
   delay(500);
 
-  //Test Buzzer
-  _Serial.print(F("OBC: BUZZER TEST..."));
-  buzzerTest();
-  _Serial.println(F("OK"));
   //Debug FTU
 /*        digitalWrite(FTU, HIGH);
         delay(1000);
@@ -284,6 +262,7 @@ void setup()
   {
     _Serial.println(F("OBC: NO SD Card"));
     card_present=false;
+    init_error = 0;
   }
   else
   {
@@ -304,19 +283,18 @@ void setup()
   }
   dataFile.close();
 
+  //Test Buzzer
+  _Serial.print(F("OBC: BUZZER TEST..."));
+  buzzerTest(init_error);
+  _Serial.println(F("OK"));
   
   //send startup msg
   _Serial.println(F("OBC: Init done"));
 
-  //start external camera video
-  _Serial.println(F("OBC: ECAM START"));
-  ecam_PictureMode();
-  ecam_pressSHTR(500);
-
-   
   //set startup time
   now = millis();  
 
+  delay(1000);
   //Startup measurement and radio
 
   getGPSMeasurement();
@@ -329,7 +307,6 @@ void loop()
   // put your main code here, to run repeatedly:
   if( ((millis() - now) > 5000) && (!is_landing))
   {
-    ecam_timer=0;
     timing();
     if(is_measure == MEASURE)
     {
@@ -344,8 +321,6 @@ void loop()
           
 //---------------datalogend------------
 
-      ecam_pressSHTR(500);
-      
       is_measure=0;
     }
     if(is_radio == RADIO)
@@ -353,6 +328,16 @@ void loop()
       lowSpeedTelemetry();
       is_radio=0;
     }
+
+    if(is_ics == GETICS)
+    {
+//      DEBUG.print(OBC_time.hour);
+//      DEBUG.print(OBC_time.minute);
+//      DEBUG.println(OBC_time.second);
+//      DEBUG.println(OBC_time.OBC_time);
+      getPICuart();
+      is_ics = 0;
+    }     
 /*    if(( GPS_Altitude > TERMINATION) && (!is_FTU_on))
     {
         digitalWrite(FTU, HIGH);
@@ -372,16 +357,6 @@ void loop()
     getGPSMeasurement();
     dumpLog();
     lowSpeedTelemetry();
-    if( ((millis() - now) > 5000) && (is_ecam_on))
-    {
-      timing();
-      ecam_pressSHTR(500);
-      ecam_timer++;
-    }
-    if( (ecam_timer > 120 ) && (is_ecam_on)) //120 for 10mins
-    {
-      ecam_OFF();
-    }
    // delay(1000);
   }
 

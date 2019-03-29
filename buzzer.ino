@@ -1,27 +1,41 @@
 void buzzer(void)
 {
-  for(int i=800;i<1500;i+=100)
+  for(int i = 0; i < 2; i++)
   {
-    tone(BUZZ,i);
-    delay(100); 
+//    pinMode(BUZZ, OUTPUT);
+    digitalWrite(BUZZ, LOW);
+    delay(1000); 
+    digitalWrite(BUZZ, HIGH);
+//    pinMode(BUZZ, INPUT_PULLUP);
+    delay(1000);
   }
   delay(100);
-  for(int i=1500;i>200;i-=100)
-  {
-    tone(BUZZ,i);
-    delay(100); 
-  }
-
-
-// delay(1000);
-  noTone(BUZZ);
-  delay(100);  
+//  pinMode(BUZZ, INPUT_PULLUP);
 }
 
-void buzzerTest()
+int32_t buzzerTest(uint8_t repeat)
 {
-    tone(BUZZ,440);
-    delay(2000);   
-    noTone(BUZZ);
+  if( repeat == 0)
+  {
+//    pinMode(BUZZ, OUTPUT);
+    digitalWrite(BUZZ, LOW);
+    delay(5000); 
+    digitalWrite(BUZZ, HIGH);
+//    pinMode(BUZZ, INPUT_PULLUP);
+    return 0;
+  }
+  
+  for(int i = 0; i < repeat; i++)
+  {
+//    pinMode(BUZZ, OUTPUT);
+    digitalWrite(BUZZ, LOW);
+    delay(1000); 
+    digitalWrite(BUZZ, HIGH);
+ //   pinMode(BUZZ, INPUT_PULLUP);
+    delay(1000);
+  }
+  delay(100);
+//  pinMode(BUZZ, INPUT_PULLUP);
+  return 0;
 }
 

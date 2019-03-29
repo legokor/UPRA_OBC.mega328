@@ -40,7 +40,7 @@ int processCMDTAmsg(void)
     if(pic == 0)
     {
       _Serial.println(F("Success"));
-      return 0;
+      delay(500);
     }
     else if(pic == 1)
     {
@@ -170,6 +170,7 @@ void getPICuart()
   while(getmsg !=0)
   {
     getmsg=GetBusMSG();
+    
     nowtime=millis();
     if(nowtime - timer >6000)
     {

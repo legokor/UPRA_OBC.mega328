@@ -73,6 +73,8 @@ char              GPS_time[10];
 char              GPS_lati[12];
 char              GPS_long[13];
 
+bool              GPS_first_fix;
+
 /*
  * SD Card variables
  */
@@ -118,6 +120,8 @@ bool is_landing=false;
 //bool is_FTU_on=false;
 
 bool is_com_present=true;
+
+uint8_t init_error;
 
 void timing()
 {
@@ -181,6 +185,8 @@ void setup()
   GPS_long[9] = '0';
   GPS_long[10] = '\0';
 
+  GPS_first_fix = false;
+  
   radio_temp[0] = 'N';
   radio_temp[1] = '/';
   radio_temp[2] = 'A';
@@ -193,29 +199,6 @@ void setup()
   ecam_init();
   ecam_ON();
   
-  _Serial.print(F("OBC: init COM..."));
-  _Serial.listen();
-  
-  //wait for COM startup or timeout
-  now = millis();
-  while(!_Serial.available())
-  {
-    if((millis() - now) > 10000)
-    {
-      is_com_present=false;
-      break;
-    }
-  }
-  now=0;
-  if(is_com_present)
-  {
-    delay(1000);
-    _Serial.println(F("OK"));
-  }
-  else
-  {
-    _Serial.println(F("COM TIMEOUT"));
-  }
 
   
   _Serial.print(F("OBC: init GPS..."));
@@ -226,12 +209,15 @@ void setup()
   {
     _Serial.listen();
     _Serial.println(F("ERROR!: Airborne mode"));
+    init_error = 3;
   }
   else
   {
     _Serial.listen();
     _Serial.println(F("OK"));
+    init_error = 5;
   }
+
   
   delay(500);
   _Serial.listen();
@@ -242,13 +228,9 @@ void setup()
   pinMode(CS, OUTPUT);
   digitalWrite(CS, HIGH);
   digitalWrite(FTU, LOW);
-
+  digitalWrite(BUZZ, HIGH);
   delay(500);
 
-  //Test Buzzer
-  _Serial.print(F("OBC: BUZZER TEST..."));
-  buzzerTest();
-  _Serial.println(F("OK"));
   //Debug FTU
 /*        digitalWrite(FTU, HIGH);
         delay(1000);
@@ -260,6 +242,7 @@ void setup()
   {
     _Serial.println(F("OBC: NO SD Card"));
     card_present=false;
+    init_error = 0;
   }
   else
   {
@@ -280,6 +263,10 @@ void setup()
   }
   dataFile.close();
 
+  //Test Buzzer
+  _Serial.print(F("OBC: BUZZER TEST..."));
+  buzzerTest(init_error);
+  _Serial.println(F("OK"));
   
   //send startup msg
   _Serial.println(F("OBC: Init done"));
@@ -293,6 +280,7 @@ void setup()
   //set startup time
   now = millis();  
 
+  delay(1000);
   //Startup measurement and radio
   getTemperatures();
   getGPSMeasurement();

@@ -162,6 +162,12 @@ void ProcessGPGGACommand()
     GPS_lati[11] ='\0';
     GPS_long[12] ='\0';
     GPS_time[7] ='\0';    
+
+    if( GPS_first_fix == false)
+    {
+      buzzerTest(2);
+      GPS_first_fix = true;
+    }
   }  
 }
 

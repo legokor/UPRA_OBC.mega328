@@ -75,6 +75,8 @@ int GetRadioHousekeeping(void)
   _Serial.listen();  
   _Serial.println(F("OBC: Get Radio Housekeeping"));  
   delay(100);
+  setBusBusy();
+  delay(500);
   _Serial.println(F("$TMHKR,C,,,,*47"));
 
   timer=millis();
@@ -96,7 +98,7 @@ int GetRadioHousekeeping(void)
         
    // _Serial.print(".");
   }
-  
+  clrBusBusy();
 }
 
 int SendRadioTelemetry(void)
@@ -118,11 +120,13 @@ void lowSpeedTelemetry(void)
       _Serial.println(radio_temp);
 //      Serial.begin(57600);
       _Serial.listen(); 
-      getMeasurements();
+      //getTemperatures();
       
       delay(500);
 //      Serial.println("");
 //      debugLOG();
+        setBusBusy();
+        delay(500);
       
 
         GPS_Alt_tmp = GPS_Altitude;
@@ -145,6 +149,7 @@ void lowSpeedTelemetry(void)
         _Serial.print(buffer);
         _Serial.println(F("*47"));    
         
+        clrBusBusy();
 }
 
 /*void lowSpeedStartup(void)

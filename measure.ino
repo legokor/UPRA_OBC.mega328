@@ -56,7 +56,7 @@ void getGPSMeasurement(void)
   serialFlush();
 }
 
-void getMeasurements(void)
+void getTemperatures(void)
 {
   _Serial.println(F("OBC: COLLECT SENSOR DATA"));
   //getGPSMeasurement();
@@ -65,22 +65,6 @@ void getMeasurements(void)
   int_temp = getIntTemp();
 }
 
-/*void createDump(void)
-{
-  dataString = "";
-  dataString += String(GPS_time);
-  dataString += ",";
-  dataString += String(GPS_lati);
-  dataString += ",";
-  dataString += String(GPS_long);
-  dataString += ",";
-  dataString += String(GPS_Altitude);
-  dataString += ",";
-  dataString += String(ext_temp);
-  dataString += ",";
-  dataString += String(int_temp);
-}
-*/
 void debugLOG(void)
 {
   _Serial.print("time:      ");_Serial.println(GPS_time);

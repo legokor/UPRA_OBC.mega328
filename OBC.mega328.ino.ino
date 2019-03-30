@@ -10,10 +10,11 @@
 /*
  * Timing macros
  */
- #define GETGPS       1   // activate GPS read every GETGPS)*5s                   (0-> never, 1-> every 5second)
- #define GETTEMP      15  // activate Temperature measurement every GETTEMP)*5s   (0-> never, 1-> every 5second)
- #define GETICS       2  // activate ICS capture every GETICS)*5s                (0-> never, 1-> every 5second)
- #define RADIO        3   // activate telemetry downlink every RADIO*5s           (0-> never, 1-> every 5second)
+ #define GETGPS       1   // activate GPS read every (GETGPS)*5s                   (0-> never, 1-> every 5second)
+ #define GETTEMP      15  // activate Temperature measurement every (GETTEMP)*5s   (0-> never, 1-> every 5second)
+ #define GETCAMHK     14  // activate ICS houskeeping request (GETCAMHK)*5s        (0-> never, 1-> every 5second)
+ #define GETICS       24  // activate ICS capture every (GETICS)*5s                (0-> never, 1-> every 5second)
+ #define RADIO        3   // activate telemetry downlink every (RADIO)*5s          (0-> never, 1-> every 5second)
  //#define TERMINATION  cut_down_alt
  
 /*
@@ -120,6 +121,7 @@ uint8_t is_gps=0;
 uint8_t is_temp=0;
 uint8_t is_radio=0;
 uint8_t is_ics=0;
+uint8_t is_cam_hk=0;
 
 bool is_climb=false;
 bool is_landing=false;
@@ -138,6 +140,7 @@ void timing()
     is_temp++;
     is_radio++;
     is_ics++;
+    is_cam_hk++;
   }
 }
 
@@ -379,6 +382,12 @@ void loop()
     {
       getTemperatures();
       is_temp = 0;
+    }
+
+    if(is_cam_hk == GETCAMHK)
+    {
+      camera_get_hk();
+      is_cam_hk = 0;
     }
 
     if(is_gps == GETGPS)

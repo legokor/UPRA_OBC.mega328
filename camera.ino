@@ -56,6 +56,12 @@ void parse_camera_hk()
   cam_sd_status = 0;
   cam_images_taken = 0;
   cam_intervalometer_period = 0;
+
+  for(i = 0; i < MSGindex; i++)
+  {
+    _Serial.print(bus_msg[i]);
+  }
+  _Serial.println("");
    
   for (i=0, j=0, k=0; (i<MSGindex) && (j<10); i++) // We start at 7 so we ignore the '$GPGGA,'
   {
@@ -77,15 +83,15 @@ void parse_camera_hk()
       }
       else if (j == 2)
       {
-        cam_sensorA_status = (uint8_t)(bus_msg[i] -'0');
+        cam_sensorA_status = (uint8_t)(bus_msg[i] - '0');
       }
       else if (j == 3)
       {
-        cam_sensorB_status = (uint8_t)(bus_msg[i] -'0');
+        cam_sensorB_status = (uint8_t)(bus_msg[i] - '0');
       }
       else if (j == 4)
       {
-        cam_sd_status = (uint8_t)(bus_msg[i] -'0');
+        cam_sd_status = (uint8_t)(bus_msg[i] - '0');
       }
       else if (j == 4)
       {
@@ -153,6 +159,7 @@ int processCMDTAmsg(void)
     if(pic == 0)
     {
       _Serial.println(F("Success"));
+      return 0;
       delay(500);
     }
     else if(pic == 1)

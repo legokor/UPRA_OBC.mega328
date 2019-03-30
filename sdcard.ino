@@ -1,3 +1,5 @@
+//header: time,latitude,longitude,altitude,ext_temp,OBC_temp,COM_temp,CAM_temp,CAM_sensorA,CAM_sensorB,CAM_sdcard,CAM_imagenum,CAM_intervalometer
+
 int dumpLog(void)
 {
  // File dataFile;
@@ -20,7 +22,21 @@ int dumpLog(void)
       dataFile.print((int32_t)(int_temp*10.0));
       dataFile.print(F(","));
      // dataFile.println(F("0123"));      
-      dataFile.println(radio_temp);      
+      dataFile.print(radio_temp);      
+      dataFile.print(F(","));
+      dataFile.print(payload1_temp);   
+      dataFile.print(F(","));
+      dataFile.print(cam_sensorA_status, DEC);   
+      dataFile.print(F(","));
+      dataFile.print(cam_sensorB_status, DEC);   
+      dataFile.print(F(","));
+      dataFile.print(cam_sd_status, DEC);   
+      dataFile.print(F(","));
+      dataFile.print(cam_images_taken, DEC);   
+      dataFile.print(F(","));
+      dataFile.println(cam_intervalometer_period, DEC);   
+         
+      
       dataFile.close();
   
       _Serial.println(F("OK"));

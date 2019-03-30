@@ -165,7 +165,7 @@ void ProcessGPGGACommand()
 
     if( GPS_first_fix == false)
     {
-      buzzerTest(2);
+      error_buzzer_first_gps_fix();
       GPS_first_fix = true;
     }
   }  

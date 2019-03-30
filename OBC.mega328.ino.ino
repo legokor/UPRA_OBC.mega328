@@ -101,6 +101,15 @@ char bus_msg[30];
 
 char radio_temp[4];
 
+/*
+ * Payload variables UPRA-CAM
+ */
+char payload1_temp[4];
+uint8_t cam_sensorA_status;
+uint8_t cam_sensorB_status;
+uint8_t cam_sd_status;
+uint32_t cam_images_taken;
+uint8_t cam_intervalometer_period;
 
 /*
  * Timing variables
@@ -188,12 +197,26 @@ void setup()
   radio_temp[1] = '/';
   radio_temp[2] = 'A';
   radio_temp[3] = '\0';
+
+  payload1_temp[0] = 'N';
+  payload1_temp[1] = '/';
+  payload1_temp[2] = 'A';
+  payload1_temp[3] = '\0';
+
+  cam_sensorA_status = 0;
+  cam_sensorB_status = 0;
+  cam_sd_status = 0;
+  cam_images_taken = 0;
+  cam_intervalometer_period = 0;
+
+  error_buzzer_init();
   
   //UART port for COM module
   _Serial.begin(SICL_BAUD);
   _Serial.println(F("OBC: startup"));
+  error_buzzer_startup();
 
-  init_error = 5;
+  init_error = 0;
    
   //UART port for GPS module
   //todo: GPS related configuration for GPS
@@ -206,13 +229,13 @@ void setup()
   {
     _Serial.listen();
     _Serial.println(F("ERROR!: Airborne mode"));
-    init_error = 3;
+    error_buzzer_error();
   }
   else
   {
     _Serial.listen();
     _Serial.println(F("OK"));
-    init_error = 5;
+    error_buzzer_nominal();
   }
 
   
@@ -220,12 +243,10 @@ void setup()
   _Serial.listen();
   //Pin configurations
   pinMode(BUSBUSY, INPUT);
-  pinMode(BUZZ, OUTPUT);
   pinMode(FTU, OUTPUT);
   pinMode(CS, OUTPUT);
   digitalWrite(CS, HIGH);
   digitalWrite(FTU, LOW);
-  digitalWrite(BUZZ, HIGH);
   delay(500);
 
   //Debug FTU
@@ -239,43 +260,101 @@ void setup()
   {
     _Serial.println(F("OBC: NO SD Card"));
     card_present=false;
-    init_error = 0;
+    error_buzzer_error();
   }
   else
   {
     _Serial.print(F("OBC: create log file..."));
     card_present=true;
+    error_buzzer_nominal();
     if (dataFile.open("data.csv", O_RDWR | O_CREAT | O_AT_END))
     {
-      dataFile.println(F("time,latitude,longitude,altitude,ext_temp,OBC_temp,COM_temp"));
+      dataFile.println(F("time,latitude,longitude,altitude,ext_temp,OBC_temp,COM_temp,CAM_temp,CAM_sensorA,CAM_sensorB,CAM_sdcard,CAM_imagenum,CAM_intervalometer"));
       dataFile.close();
       _Serial.println(F("OK"));      
+      error_buzzer_nominal();
     }   
     else 
     {
       card_present=false;
       dataFile.close();
       _Serial.println(F("File error!"));
+      error_buzzer_error();
     }    
   }
   dataFile.close();
 
-  //Test Buzzer
-  _Serial.print(F("OBC: BUZZER TEST..."));
-  buzzerTest(init_error);
-  _Serial.println(F("OK"));
-  
   //send startup msg
   _Serial.println(F("OBC: Init done"));
 
-  //start external camera video
-  _Serial.println(F("OBC: ECAM START"));
-
+  
    
   //set startup time
   now = millis();  
-
   delay(1000);
+
+
+  //--------System Check----------
+  
+  //check COM
+  _Serial.println(F("OBC: Check COM..."));
+  //init_error = GetRadioHousekeeping;
+  //GetRadioHousekeeping;
+  if( GetRadioHousekeeping() != 0)
+  {
+    _Serial.println(F("OBC: COM not present"));
+    error_buzzer_error();
+  }
+  else
+  {
+    _Serial.println(F("OBC: COM OK"));
+    error_buzzer_nominal();
+  }
+
+  //check Payload
+  _Serial.println(F("OBC: Check UPRA_CAM..."));
+  if(camera_get_hk() != 0)
+  {
+    _Serial.println(F("OBC: UPRA-CAM not present"));
+    error_buzzer_error();
+  }
+  else
+  {
+    _Serial.println(F("OBC: UPRA-CAM present"));
+    error_buzzer_nominal();
+    
+    if(cam_sensorA_status == 0)
+    {
+      _Serial.println(F("OBC: UPRA-CAM sensor A error"));
+      error_buzzer_error();
+    }
+    else
+    {
+      _Serial.println(F("OBC: UPRA-CAM sensor A OK"));
+      error_buzzer_nominal();
+    }
+    if(cam_sensorB_status == 0)
+    {
+      _Serial.println(F("OBC: UPRA-CAM sensor B error"));
+      error_buzzer_error();
+    }
+    else
+    {
+      _Serial.println(F("OBC: UPRA-CAM sensor B OK"));
+      error_buzzer_nominal();
+    }
+    if(cam_sd_status == 0)
+    {
+      _Serial.println(F("OBC: UPRA-CAM SD Card error"));
+      error_buzzer_error();
+    }
+    else
+    {
+      _Serial.println(F("OBC: UPRA-CAM SD Card OK"));
+      error_buzzer_nominal();
+    }
+  }
+
   //Startup measurement and radio
   getTemperatures();
   getGPSMeasurement();
@@ -343,11 +422,11 @@ void loop()
   if(is_landing)
   {
     _Serial.println(F("OBC: BEACON MODE"));
-    buzzer();
+    buzzer_toggle(BUZZ);
     getGPSMeasurement();
     dumpLog();
     lowSpeedTelemetry();
-   // delay(1000);
+    delay(2000);
   }
 
 

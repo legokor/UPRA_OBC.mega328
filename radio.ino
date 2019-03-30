@@ -62,7 +62,7 @@ int parseEOTHandshake(void)
 }
 
 
-int GetRadioHousekeeping(void)
+int32_t GetRadioHousekeeping(void)
 {
   int inByte;
   int i=0;
@@ -92,13 +92,15 @@ int GetRadioHousekeeping(void)
     if(nowtime - timer >4000)
     {
       _Serial.println(F("OBC: COM HK timeout"));
-      break;
+      clrBusBusy();
+      return -1;
     }
     
         
    // _Serial.print(".");
   }
   clrBusBusy();
+  return 0;
 }
 
 int SendRadioTelemetry(void)
